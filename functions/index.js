@@ -1,3 +1,6 @@
+/* eslint-disable promise/no-nesting */
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable promise/always-return */
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
@@ -67,25 +70,20 @@ app.post('/signup',(req,res) => {
         handle: req.body.handle,
     };
     // eslint-disable-next-line promise/catch-or-return
-    // db.doc(`/users/${newUser.handle}`).get()
-    //     .then(doc => {
-    //         if(doc.exists){
-    //             return(res.status(400).json({handle : 'this handle is already taken'}));
-    //         }else {
-    //             firebase.auth().createUserWithEmailAndPassword(newUser.email,newUser.password)
-    //             .then(data => {
-    //                 const userId = data.user.uid;
-    //             })
-    //         }
-    //     })
-    firebase.auth().createUserWithEmailAndPassword(newUser.email,newUser.password)
-        .then(data => {
-            return res.status(201).json({message : `user ${data.user.uid} signed up successfully`});
-        }).catch((err) => {
-            console.error(err);
-            return res.status(500).json({ error: err.code });
-        })
-});
+    db.doc(`/users/${newUser.handle}`).get()
+        .then(doc => {
+            if(doc.exists){
+                return res.status(400).json({handle : 'this handle is already taken'});
+            }else {
+                return firebase.auth().createUserWithEmailAndPassword(newUser.email,newUser.password);
+            }})
+            .then(data => { return data.user.getIdToken(); })
+                .then(token => { return res.status(200).json({ token }); })
+                    .catch(err => {
+                        console.log(err);
+                        return res.status(500).json({ "error":err.code });
+                    });
 
+            });
 
 exports.api = functions.https.onRequest(app);
