@@ -63,6 +63,7 @@ app.post('/group',(req,res) => {
 });
 
 app.post('/signup',(req,res) => {
+    // test for git connection
     const newUser = {
         email: req.body.email,
         password: req.body.password,
